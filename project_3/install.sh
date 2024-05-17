@@ -25,7 +25,7 @@ terraform apply -auto-approve
 EC2_IP=$(terraform output -raw ec2_1)
 cd ../Ansible
 echo "[ec2]" > hosts
-echo "$EC2_IP ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/id_rsa.pub" >> hosts
+echo "$EC2_IP ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/id_rsa" >> hosts
 
 # # Run Ansible playbook
 echo "RUNNING ANSIBLE-PLAYBOOK"
