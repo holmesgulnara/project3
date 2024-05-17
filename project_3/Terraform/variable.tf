@@ -3,6 +3,11 @@ variable region {
   description = "Provide region"
 }
 
+variable key_name {
+  type = string
+  description = "provide key name"
+}
+
 variable vpc_cidr {
   type = string
   description = "provide vpc cidr block"

@@ -2,6 +2,15 @@ provider aws {
   region = var.region
 }
 
+resource "aws_key_pair" "grp4-keypair" {
+  key_name   = var.key_name
+  public_key = file("~/.ssh/id_rsa.pub")
+
+  tags = {
+    Name = var.key_name
+  }
+}
+
 resource "aws_vpc" "main" {
   cidr_block = var.vpc_cidr
 }

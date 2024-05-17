@@ -1,0 +1,95 @@
+- name: Add prometheus system user
+  user:
+    name: prometheus
+    system: yes
+    createhome: no
+    shell: /bin/false
+
+- name: Download Prometheus binary
+  get_url:
+    url: https://github.com/prometheus/prometheus/releases/download/v2.45.0/prometheus-2.45.0.linux-amd64.tar.gz
+    dest: "/tmp/prometheus-2.45.0.linux-amd64.tar.gz"
+
+- name: Extract Prometheus tarball
+  unarchive:
+    src: "/tmp/prometheus-2.45.0.linux-amd64.tar.gz"
+    dest: "/tmp/"
+    remote_src: yes
+
+- name: Create necessary Prometheus directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: prometheus
+    group: prometheus
+  loop:
+    - /data
+    - /etc/prometheus
+
+- name: Move Prometheus binaries to /usr/local/bin
+  command: mv /tmp/prometheus-2.45.0.linux-amd64/prometheus /tmp/prometheus-2.45.0.linux-amd64/promtool /usr/local/bin/
+
+- name: Move console libraries and Prometheus config
+  command: mv /tmp/prometheus-2.45.0.linux-amd64/{{ item }} /etc/prometheus/
+  loop:
+    - consoles
+    - console_libraries
+    - prometheus.yml
+
+- name: Change ownership for Prometheus directories and files
+  file:
+    path: "{{ item }}"
+    owner: prometheus
+    group: prometheus
+    recurse: yes
+  loop:
+    - /etc/prometheus
+    - /data
+
+- name: Configure Prometheus systemd service
+  copy:
+    dest: /etc/systemd/system/prometheus.service
+    content: |
+      [Unit]
+      Description=Prometheus
+      Wants=network-online.target
+      After=network-online.target
+      StartLimitIntervalSec=500
+      StartLimitBurst=5
+
+      [Service]
+      User=prometheus
+      Group=prometheus
+      Type=simple
+      Restart=on-failure
+      RestartSec=5s
+      ExecStart=/usr/local/bin/prometheus \
+        --config.file=/etc/prometheus/prometheus.yml \
+        --storage.tsdb.path=/data \
+        --web.console.templates=/etc/prometheus/consoles \
+        --web.console.libraries=/etc/prometheus/console_libraries \
+        --web.listen-address=0.0.0.0:9090 \
+        --web.enable-lifecycle
+
+      [Install]
+      WantedBy=multi-user.target
+
+- name: Reload systemd
+  systemd:
+    daemon_reload: yes
+
+- name: Enable and start Prometheus service
+  systemd:
+    name: prometheus
+    enabled: yes
+    state: started
+
+
+
+
+
+
+
+
+
+
